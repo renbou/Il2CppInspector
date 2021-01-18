@@ -35,6 +35,7 @@ namespace Il2CppInspector.Outputs
                 () => {
                     writeMethods();
                     writeStringLiterals();
+                    writeDefaultFieldValues();
                     writeUsages();
                     writeFunctions();
                     writeMetadata();
@@ -93,6 +94,16 @@ namespace Il2CppInspector.Outputs
                         writer.WriteString("string", str.Value);
                     });
             }, "String literals");
+        }
+
+        private void writeDefaultFieldValues() {
+            writeArray("defaultFieldValues", () => {
+                foreach (var field in model.DefaultFieldValues)
+                    writeObject(() => {
+                        writeName(field.Key, field.Value.Item1);
+                        writer.WriteString("value", field.Value.Item2.ToString());
+                    });
+            }, "Default values for fields");
         }
 
         private void writeUsages() {

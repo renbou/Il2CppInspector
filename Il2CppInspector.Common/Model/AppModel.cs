@@ -51,6 +51,8 @@ namespace Il2CppInspector.Model
         // For il2cpp < 19, the key is the string literal ordinal instead of the address
         public Dictionary<ulong, string> Strings { get; } = new Dictionary<ulong, string>();
 
+        public Dictionary<ulong, (string, object)> DefaultFieldValues { get; } = new Dictionary<ulong, (string, object)>();
+
         public bool StringIndexesAreOrdinals => Package.Version < 19;
 
         // The .NET type model for the application
@@ -211,7 +213,9 @@ namespace Il2CppInspector.Model
                             var str = TypeModel.GetMetadataUsageName(usage);
                             Strings.Add(address, str);
                             break;
-
+                        case MetadataUsageType.FieldInfo:
+                            DefaultFieldValues.Add(address, (TypeModel.GetMetadataUsageName(usage), TypeModel.GetMetadataDefaultValue(usage)));
+                            break;
                         case MetadataUsageType.Type:
                         case MetadataUsageType.TypeInfo:
                             var type = TypeModel.GetMetadataUsageType(usage);
@@ -234,7 +238,7 @@ namespace Il2CppInspector.Model
                             var method = TypeModel.GetMetadataUsageMethod(usage);
                             declarationGenerator.IncludeMethod(method);
                             AddTypes(declarationGenerator.GenerateRemainingTypeDeclarations());
-                            
+
                             // Any method here SHOULD already be in the Methods list
                             // but we have seen one example where this is not the case for a MethodDef
                             if (!Methods.ContainsKey(method)) {
@@ -279,7 +283,7 @@ namespace Il2CppInspector.Model
             return this;
         }
 
-        private void AddTypes(List<(TypeInfo ilType, CppComplexType valueType, CppComplexType referenceType, 
+        private void AddTypes(List<(TypeInfo ilType, CppComplexType valueType, CppComplexType referenceType,
             CppComplexType fieldsType, CppComplexType vtableType, CppComplexType staticsType)> types) {
 
             // Add types to dependency-ordered list

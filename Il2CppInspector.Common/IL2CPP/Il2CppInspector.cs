@@ -68,7 +68,7 @@ namespace Il2CppInspector
         // TODO: Finish all file access in the constructor and eliminate the need for this
         public IFileFormatStream BinaryImage => Binary.Image;
 
-        private (ulong MetadataAddress, object Value)? getDefaultValue(int typeIndex, int dataIndex) {
+        private (ulong MetadataAddress, object Value)? getDefaultValue(int typeIndex, int dataIndex, int defaultLength = 512) {
             // No default
             if (dataIndex == -1)
                 return (0ul, null);
@@ -122,6 +122,10 @@ namespace Il2CppInspector
                 case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
                     var uiLen = Metadata.ReadInt32();
                     value = Encoding.UTF8.GetString(Metadata.ReadBytes(uiLen));
+                    break;
+                // If we don't know how to parse this type then lets just write it out as a hex string
+                default:
+                    value = BitConverter.ToString(Metadata.ReadBytes(defaultLength)).Replace("-", "");
                     break;
             }
             return ((ulong) pValue, value);
@@ -232,8 +236,17 @@ namespace Il2CppInspector
             Metadata = metadata;
 
             // Get all field default values
-            foreach (var fdv in Metadata.FieldDefaultValues)
-                FieldDefaultValue.Add(fdv.fieldIndex, ((ulong,object)) getDefaultValue(fdv.typeIndex, fdv.dataIndex));
+            for (var i = 0; i < Metadata.FieldDefaultValues.Length; i++) {
+                var fdv = Metadata.FieldDefaultValues[i];
+
+                // Default size if the type of this defaultValue cannot be parsed properly
+                var defaultLength = 512;
+                if (i < Metadata.FieldDefaultValues.Length - 1) {
+                    defaultLength = Metadata.FieldDefaultValues[i+1].dataIndex - fdv.dataIndex;
+                }
+
+                FieldDefaultValue.Add(fdv.fieldIndex, ((ulong,object)) getDefaultValue(fdv.typeIndex, fdv.dataIndex, defaultLength));
+            }
 
             // Get all parameter default values
             foreach (var pdv in Metadata.ParameterDefaultValues)

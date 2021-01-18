@@ -176,7 +176,7 @@ namespace Il2CppInspector.Reflection
 
             // Get list of pointers to type parameters (both unresolved and concrete)
             var genericTypeArguments = Package.BinaryImage.ReadMappedArray<ulong>(inst.type_argv, (int)inst.type_argc);
-            
+
             return genericTypeArguments.Select(a => GetTypeFromVirtualAddress(a)).ToArray();
         }
 
@@ -315,7 +315,7 @@ namespace Il2CppInspector.Reflection
                     var method = GetMetadataUsageMethod(usage);
                     return $"{method.DeclaringType.Name}.{method.Name}";
 
-                case MetadataUsageType.FieldInfo: 
+                case MetadataUsageType.FieldInfo:
                     var fieldRef = Package.FieldRefs[usage.SourceIndex];
                     var type = GetMetadataUsageType(usage);
                     var field = type.DeclaredFields.First(f => f.Index == type.Definition.fieldStart + fieldRef.fieldIndex);
@@ -330,6 +330,18 @@ namespace Il2CppInspector.Reflection
                     return $"{type.Name}.{method.Name}";
             }
             throw new NotImplementedException("Unknown metadata usage type: " + usage.Type);
+        }
+
+        // Get the default value of metadata
+        public object GetMetadataDefaultValue(MetadataUsage usage) {
+            switch (usage.Type) {
+                case MetadataUsageType.FieldInfo:
+                    var fieldRef = Package.FieldRefs[usage.SourceIndex];
+                    var type = GetMetadataUsageType(usage);
+                    var fieldIndex = type.Definition.fieldStart + fieldRef.fieldIndex;
+                    return Package.FieldDefaultValue[fieldIndex].Item2;
+            }
+            throw new NotImplementedException("Incorrect metadata sage type to retrieve default value");
         }
 
         // Get the type used in a metadata usage
