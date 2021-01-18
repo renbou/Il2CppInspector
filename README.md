@@ -43,6 +43,8 @@ Il2CppInspector helps you to reverse engineer IL2CPP applications, providing the
 
 * Tested with [every release of IL2CPP](#version-support) since Unity 5.3.0
 
+### Differences from djkaty's version
+* Default values for runtime-based class field initialization (like RuntimeHelpers::InitializeArray) extracted from the metadata. Currently this can only be seen in the json metadata output, but I plan on adding it to the IDA/Ghidra scripts as well
 
 ### Tutorials and Guides
 
